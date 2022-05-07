@@ -67,7 +67,7 @@ class ArithmeticEncoding:
 
     def process_stage(self, probability_table, stage_min, stage_max):
         """
-        Processing a stage in the encoding/decoding process.
+        Processing a stage in the encoding/decoding process. Returns probability distribution of current interval
         """
         stage_probs = {}
         stage_domain = stage_max - stage_min
@@ -106,9 +106,10 @@ class ArithmeticEncoding:
 
         return encoder, encoded_msg
 
-    def decode(self, encoded_msg, msg_length, probability_table):
+    def decode(self, encoded_msg, msg_length):
         """
-        Decodes a message.
+        Decodes a message. encoded_msg: real number, len of encoded string
+        Kako sploh odkodirati adaptive msg?
         """
 
         decoder = []
@@ -118,10 +119,12 @@ class ArithmeticEncoding:
         stage_max = Decimal(1.0)
 
         for idx in range(msg_length):
-            probability_table = self.get_probability_table(encoded_msg[0:idx])
+            probability_table = self.get_probability_table(decoded_msg)
             stage_probs = self.process_stage(probability_table, stage_min, stage_max)
 
+            #msg_term: char in alphabet, value: chars l and probability for current interval
             for msg_term, value in stage_probs.items():
+                #break if we are in the right interval
                 if encoded_msg >= value[0] and encoded_msg <= value[1]:
                     break
 
@@ -298,12 +301,17 @@ if __name__ == '__main__':
     #                                  probability_table=AE.probability_table)
     print("Encoded Message: {msg}".format(msg=encoded_msg))
 
+    decoder, decoded_msg = AE.decode(encoded_msg=encoded_msg,
+                                     msg_length=len(original_msg))
+
+    # decode fun should be without probability_table
     # decoder, decoded_msg = AE.decode(encoded_msg=encoded_msg,
     #                                  msg_length=len(original_msg),
-    #                                  probability_table=AE.probability_table)
-    # print("Decoded Message: {msg}".format(msg=decoded_msg))
-    #
-    # print("Message Decoded Successfully? {result}".format(result=original_msg == decoded_msg))
+    #                                  probability_table=probability_table)
+
+    print("Decoded Message: {msg}".format(msg=decoded_msg))
+
+    print("Message Decoded Successfully? {result}".format(result=original_msg == decoded_msg))
 
     ### -----huffman ----
     print("---------------  Huffman  -------------------------")
