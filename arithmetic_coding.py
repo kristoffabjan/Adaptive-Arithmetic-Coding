@@ -7,10 +7,12 @@ class ArithmeticEncoding:
     ArithmeticEncoding is a class for building arithmetic encoding.
     """
 
-    def __init__(self, frequency_table):
-        self.probability_table = self.get_probability_table(frequency_table)
+    #   Receives alphabet as char list
+    def __init__(self, alphabet):
+        #self.probability_table = self.get_probability_table(frequency_table)
+        self.alphabet = alphabet
 
-    def get_probability_table(self, frequency_table):
+    def get_probability_table_original(self, frequency_table):
         """
         Calculates the probability table out of the frequency table.
         """
@@ -21,6 +23,32 @@ class ArithmeticEncoding:
             probability_table[key] = value / total_frequency
 
         return probability_table
+
+    def get_probability_table(self, previous_sequence):
+        """
+        Calculates the probability table out of the self.alphabet and previously encoded sequence
+        """
+        #total_frequency = sum(list(frequency_table.values()))
+
+        probability_table = {}
+        for char in alphabet:
+            #returns probability for current char
+            probability_table[char] = self.laplace(char, previous_sequence, self.alphabet )
+
+        return probability_table
+
+    # Returns conditional probability of character occuring after previous(already encoded) sequence
+    #   current_char: char, prev_seq: string, alphabet: list of char
+    def laplace(self, current_char, previous_sequence, alphabet):
+        # # of current characters in previous seq
+        fb = previous_sequence.count(current_char)
+
+        # create count of occrances in previos seq for whole alphabet
+        fa_to_fn = []
+        for letter in alphabet:
+            fa_to_fn.append(previous_sequence.count(letter))
+
+        return (fb + 1) / (sum(fa_to_fn) + len(alphabet))
 
     def get_encoded_value(self, encoder):
         """
@@ -51,7 +79,7 @@ class ArithmeticEncoding:
             stage_min = cum_prob
         return stage_probs
 
-    def encode(self, msg, probability_table):
+    def encode(self, msg):
         """
         Encodes a message.
         """
@@ -62,6 +90,7 @@ class ArithmeticEncoding:
         stage_max = Decimal(1.0)
 
         for msg_term_idx in range(len(msg)):
+            probability_table = self.get_probability_table(msg[0:msg_term_idx])
             stage_probs = self.process_stage(probability_table, stage_min, stage_max)
 
             msg_term = msg[msg_term_idx]
@@ -89,6 +118,7 @@ class ArithmeticEncoding:
         stage_max = Decimal(1.0)
 
         for idx in range(msg_length):
+            probability_table = self.get_probability_table(encoded_msg[0:idx])
             stage_probs = self.process_stage(probability_table, stage_min, stage_max)
 
             for msg_term, value in stage_probs.items():
@@ -255,22 +285,25 @@ if __name__ == '__main__':
                        "c": 0.1,
                        "d": 0.4}
 
+    alphabet = ['a', 'b', 'c', 'd']
 
-    AE = ArithmeticEncoding(frequency_table)
 
-    original_msg = "bdab"
+    AE = ArithmeticEncoding(alphabet)
+
+    original_msg = "aababdc"
     print("Original Message: {msg}".format(msg=original_msg))
 
-    encoder, encoded_msg = AE.encode(msg=original_msg,
-                                     probability_table=AE.probability_table)
+    encoder, encoded_msg = AE.encode(msg=original_msg)
+    # encoder, encoded_msg = AE.encode(msg=original_msg,
+    #                                  probability_table=AE.probability_table)
     print("Encoded Message: {msg}".format(msg=encoded_msg))
 
-    decoder, decoded_msg = AE.decode(encoded_msg=encoded_msg,
-                                     msg_length=len(original_msg),
-                                     probability_table=AE.probability_table)
-    print("Decoded Message: {msg}".format(msg=decoded_msg))
-
-    print("Message Decoded Successfully? {result}".format(result=original_msg == decoded_msg))
+    # decoder, decoded_msg = AE.decode(encoded_msg=encoded_msg,
+    #                                  msg_length=len(original_msg),
+    #                                  probability_table=AE.probability_table)
+    # print("Decoded Message: {msg}".format(msg=decoded_msg))
+    #
+    # print("Message Decoded Successfully? {result}".format(result=original_msg == decoded_msg))
 
     ### -----huffman ----
     print("---------------  Huffman  -------------------------")
