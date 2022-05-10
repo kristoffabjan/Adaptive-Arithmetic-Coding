@@ -15,6 +15,12 @@ class ArithmeticEncoding:
         #self.probability_table = self.get_probability_table(frequency_table)
         self.alphabet = alphabet
 
+    def get_initial_probability_table(self):
+        """
+        Table gives initial probabilities for first char. Probabilities were given by professor
+        """
+        return {'a': 0.5, 'b': 0.3, 'c': 0.1, 'd':0.1}
+
     def get_probability_table_original(self, frequency_table):
         """
         Calculates the probability table out of the frequency table.
@@ -94,6 +100,8 @@ class ArithmeticEncoding:
 
         for msg_term_idx in range(len(msg)):
             probability_table = self.get_probability_table(msg[0:msg_term_idx])
+            if msg_term_idx == 0:
+                probability_table = self.get_initial_probability_table()
             stage_probs = self.process_stage(probability_table, stage_min, stage_max)
 
             msg_term = msg[msg_term_idx]
@@ -123,6 +131,8 @@ class ArithmeticEncoding:
 
         for idx in range(msg_length):
             probability_table = self.get_probability_table(decoded_msg)
+            if decoded_msg == "":
+                probability_table = self.get_initial_probability_table()
             stage_probs = self.process_stage(probability_table, stage_min, stage_max)
 
             #msg_term: char in alphabet, value: chars l and probability for current interval
@@ -321,6 +331,7 @@ def total_gain_aac(sequence, encoded_number):
 
 if __name__ == '__main__':
     decimal.getcontext().prec = 70
+
     print("---------Adaptive Arithmetic encoding and decoding start----------------")
     alphabet = ['a', 'b', 'c', 'd']
     AE = ArithmeticEncoding(alphabet)
