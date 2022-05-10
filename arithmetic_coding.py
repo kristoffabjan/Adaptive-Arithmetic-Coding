@@ -1,4 +1,7 @@
+import decimal
 from decimal import Decimal
+import random
+import sys
 #import pyae
 
 
@@ -140,6 +143,7 @@ class ArithmeticEncoding:
         return decoder, decoded_msg
 
 
+
 # --------- HUFFMAN
 # A Huffman Tree Node
 class Node:
@@ -215,8 +219,18 @@ def Total_Gain(data, coding):
     for symbol in symbols:
         count = data.count(symbol)
         after_compression += count * len(coding[symbol])  # calculate how many bit is required for that symbol in total
-    print("Space usage before compression (in bits):", before_compression)
-    print("Space usage after compression (in bits):", after_compression)
+    print("Space usage before compression for Huffman coding (in bits):", before_compression)
+    print("Space usage after compression for Huffman coding  (in bits):", after_compression)
+
+def compression_ratio_huffman(data, coding):
+    before_compression = len(data) * 8  # total bit space to stor the data before compression
+    after_compression = 0
+    symbols = coding.keys()
+    for symbol in symbols:
+        count = data.count(symbol)
+        after_compression += count * len(coding[symbol])  # calculate how many bit is required for that symbol in total
+    print("Compression ratio for huffman coding: {ratio}".format(
+        ratio=after_compression / before_compression))
 
 
 def Huffman_Encoding(data):
@@ -255,6 +269,7 @@ def Huffman_Encoding(data):
     huffman_encoding = Calculate_Codes(nodes[0])
     print("symbols with codes", huffman_encoding)
     Total_Gain(data, huffman_encoding)
+    compression_ratio_huffman(data, huffman_encoding)
     encoded_output = Output_Encoded(data, huffman_encoding)
     return encoded_output, nodes[0]
 
@@ -277,47 +292,68 @@ def Huffman_Decoding(encoded_data, huffman_tree):
     string = ''.join([str(item) for item in decoded_output])
     return string
 
+# Creates a sequence(as string) of length n with characters from alphabet
+#   alphabet: list of charachters or string of characters
+#   n: len of sequence
+def create_sequence(alphabet, n):
+    """
+        A helper function to obtain the encoded output, Creates a sequence(as string) of length n with characters from alphabet
+        alphabet: list of charachters or string of characters
+         n: len of sequence
+    """
+    if (type(alphabet) == list):
+        # list to string
+        alphabet_as_string = ''.join(alphabet)
+
+    # random sample of len n
+    return ''.join(random.choice(alphabet_as_string) for i in range(n))
+
+def total_gain_aac(sequence, encoded_number):
+    """
+        Comparison of required bits for initial string versus compressed real number
+        Returns tuple of before and after compression
+    """
+    before_compression = len(sequence) * 8  # total bit space to stor the data before compression
+    after_compression = sys.getsizeof(encoded_number)
+    # print("Space usage before compression (in bits):", before_compression)
+    # print("Space usage after compression (in bits):", after_compression)
+    return (before_compression, after_compression)
+
 if __name__ == '__main__':
-    frequency_table = {"a": 2,
-                       "b": 3,
-                       "c": 1,
-                       "d": 4}
-
-    probability_table = {"a": 0.2,
-                       "b": 0.3,
-                       "c": 0.1,
-                       "d": 0.4}
-
+    decimal.getcontext().prec = 70
+    print("---------Adaptive Arithmetic encoding and decoding start----------------")
     alphabet = ['a', 'b', 'c', 'd']
-
-
     AE = ArithmeticEncoding(alphabet)
 
-    original_msg = "aababdc"
+    original_msg_1 = "aababdc"
+    original_msg = create_sequence(alphabet, 100)
     print("Original Message: {msg}".format(msg=original_msg))
 
     encoder, encoded_msg = AE.encode(msg=original_msg)
-    # encoder, encoded_msg = AE.encode(msg=original_msg,
-    #                                  probability_table=AE.probability_table)
     print("Encoded Message: {msg}".format(msg=encoded_msg))
 
     decoder, decoded_msg = AE.decode(encoded_msg=encoded_msg,
                                      msg_length=len(original_msg))
-
-    # decode fun should be without probability_table
-    # decoder, decoded_msg = AE.decode(encoded_msg=encoded_msg,
-    #                                  msg_length=len(original_msg),
-    #                                  probability_table=probability_table)
-
     print("Decoded Message: {msg}".format(msg=decoded_msg))
 
     print("Message Decoded Successfully? {result}".format(result=original_msg == decoded_msg))
 
+    before_compression = total_gain_aac(original_msg, encoded_msg)[0]
+    after_compression = total_gain_aac(original_msg, encoded_msg)[1]
+    print("Space usage before compression for adaptive arithmetic coding (in bits):", before_compression)
+    print("Space usage after compression for adaptive arithmetic coding(in bits):", after_compression)
+    #get compression ratio
+    print("Compression ratio for adaptive arithmetic coding: {ratio}".format(ratio=after_compression/before_compression) )
+
+    print("---------Adaptive Arithmetic encoding and decoding end----------------")
+
     ### -----huffman ----
-    print("---------------  Huffman  -------------------------")
+    print()
+    print("---------Huffman encoding and decoding start----------------")
     encoding, tree = Huffman_Encoding(original_msg)
     print("Encoded output", encoding)
     print("Decoded Output", Huffman_Decoding(encoding, tree))
+    print("---------Huffman encoding and decoding end----------------")
 
     #DODAJ DOLZINO ARITMETICNEGA
     #DODAJ LAPLACE
