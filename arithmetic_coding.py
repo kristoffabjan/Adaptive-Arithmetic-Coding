@@ -2,6 +2,9 @@ import decimal
 from decimal import Decimal
 import random
 import sys
+import math
+import pandas as pd
+import matplotlib.pyplot as plt
 #import pyae
 
 
@@ -120,7 +123,6 @@ class ArithmeticEncoding:
     def decode(self, encoded_msg, msg_length):
         """
         Decodes a message. encoded_msg: real number, len of encoded string
-        Kako sploh odkodirati adaptive msg?
         """
 
         decoder = []
@@ -242,9 +244,19 @@ def compression_ratio_huffman(data, coding):
     print("Compression ratio for huffman coding: {ratio}".format(
         ratio=after_compression / before_compression))
 
+    return sys.getsizeof(data) / sys.getsizeof(coding)
+    #return after_compression / before_compression
+
+def get_initial_probability_table():
+    """
+    Table gives initial probabilities for first char. Probabilities were given by professor
+    """
+    return {'a': 0.5, 'b': 0.3, 'c': 0.1, 'd':0.1}
+
 
 def Huffman_Encoding(data):
-    symbol_with_probs = Calculate_Probability(data)
+    #symbol_with_probs = Calculate_Probability(data)
+    symbol_with_probs = get_initial_probability_table()
     symbols = symbol_with_probs.keys()
     probabilities = symbol_with_probs.values()
     print("symbols: ", symbols)
@@ -279,9 +291,9 @@ def Huffman_Encoding(data):
     huffman_encoding = Calculate_Codes(nodes[0])
     print("symbols with codes", huffman_encoding)
     Total_Gain(data, huffman_encoding)
-    compression_ratio_huffman(data, huffman_encoding)
+    cr = compression_ratio_huffman(data, huffman_encoding)
     encoded_output = Output_Encoded(data, huffman_encoding)
-    return encoded_output, nodes[0]
+    return encoded_output, nodes[0], cr
 
 
 def Huffman_Decoding(encoded_data, huffman_tree):
@@ -323,7 +335,7 @@ def total_gain_aac(sequence, encoded_number):
         Comparison of required bits for initial string versus compressed real number
         Returns tuple of before and after compression
     """
-    before_compression = len(sequence) * 8  # total bit space to stor the data before compression
+    before_compression = sys.getsizeof(sequence)  # total bit space to stor the data before compression
     after_compression = sys.getsizeof(encoded_number)
     # print("Space usage before compression (in bits):", before_compression)
     # print("Space usage after compression (in bits):", after_compression)
@@ -361,10 +373,50 @@ if __name__ == '__main__':
     ### -----huffman ----
     print()
     print("---------Huffman encoding and decoding start----------------")
-    encoding, tree = Huffman_Encoding(original_msg)
+    encoding, tree, cr = Huffman_Encoding(original_msg)
     print("Encoded output", encoding)
     print("Decoded Output", Huffman_Decoding(encoding, tree))
     print("---------Huffman encoding and decoding end----------------")
 
-    #DODAJ DOLZINO ARITMETICNEGA
-    #DODAJ LAPLACE
+    ratios_adaptive = []
+    ratios_huffman = []
+    for i in range(1,100):
+        message = create_sequence(alphabet, i)
+
+        #aac
+        encoder, encoded_msg = AE.encode(msg=message)
+        before_compression = total_gain_aac(message, encoded_msg)[0]
+        after_compression = total_gain_aac(message, encoded_msg)[1]
+        ratio_aac = before_compression/after_compression
+        ratios_adaptive.append(ratio_aac)
+
+        #huff
+        encoding, tree, cr = Huffman_Encoding(message)
+        ratio_huff = cr
+        ratios_huffman.append(ratio_huff)
+
+    print("...............................")
+
+    print("Huffman ratios")
+    print(ratios_huffman)
+    print("...............................")
+
+    print("Adaptive ratios")
+    print(ratios_adaptive)
+    #ratios_huffman[0] = 0.001
+
+    #ra = list(map(lambda x: math.log(x, 2), ratios_adaptive))
+    #rf = list(map(lambda x: math.log(x,2), ratios_huffman))
+    #ra = list(map(lambda x: math.log(x, 2), ratios_adaptive))
+    #rf = list(map(lambda x: math.log(x, 2), ratios_huffman))
+
+    plt.figure()
+    plt.subplot(211)
+    #plt.plot(ra, 'k', rf, 'k', linestyle="-")
+    #plt.plot(ratios_adaptive, ratios_huffman)
+    lineObjects = plt.plot(ratios_adaptive, 'b-', ratios_huffman, 'r-')
+    plt.title('AAC and Huffman ratio on various sequence lengths')
+    plt.legend(iter(lineObjects), ('AAC', 'Huffman'))
+    plt.ylim(0.0, 1.9)
+    plt.show()
+
